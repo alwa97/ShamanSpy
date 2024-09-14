@@ -1,5 +1,7 @@
 # ShamanSpy
 
+![example](https://i.imgur.com/hr5K2ad.png "Statistics frame")
+
 ShamanSpy is a World of Warcraft 1.12 addon that provides real-time tracking of Shaman totem uptimes on your character, specifically focusing on Grace of Air and Windfury totems.
 
 ## Features
