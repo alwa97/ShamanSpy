@@ -1,4 +1,3 @@
--- SavedVariables declaration (this should be at the top of your file)
 ShamanSpyData = ShamanSpyData or {}
 
 local totalCombatTime = 0
@@ -15,26 +14,22 @@ local frameStart = CreateFrame("Frame")
 local frameEnd = CreateFrame("Frame")
 local buffFrame = CreateFrame("Frame")
 
--- Function to display messages
 local function DisplayMessage(message)
     DEFAULT_CHAT_FRAME:AddMessage("|cFF00FFFF[ShamanSpy]|r " .. message)
 end
 
--- Function to save data
 local function SaveData()
     ShamanSpyData.totalCombatTime = totalCombatTime
     ShamanSpyData.totalGraceOfAirTime = totalGraceOfAirTime
     ShamanSpyData.totalWindfuryTime = totalWindfuryTime
 end
 
--- Function to reset data
 local function ResetData()
     ShamanSpyData.totalCombatTime = 0
     ShamanSpyData.totalGraceOfAirTime = 0
     ShamanSpyData.totalWindfuryTime = 0
 end
 
--- Function to load data
 local function LoadData()
     totalCombatTime = ShamanSpyData.totalCombatTime or 0
     totalGraceOfAirTime = ShamanSpyData.totalGraceOfAirTime or 0
@@ -108,7 +103,6 @@ local function checkForWindfury()
     end
 end
 
--- Create a simple frame for displaying stats
 local statsFrame
 local statsText
 
@@ -152,7 +146,6 @@ local function CreateStatsFrame()
     statsText:SetPoint("TOP", header, "BOTTOM", 0, -5)
     statsText:SetText("Combat Stats")
    
-    -- Modified close button positioning
     local closeButton = CreateFrame("Button", nil, header)
     closeButton:SetWidth(32)
     closeButton:SetHeight(32)
@@ -210,14 +203,12 @@ end
 
 statsFrame, statsText = CreateStatsFrame()
 
--- Helper function to format time as MM:SSm
 local function formatTime(timeInSeconds)
     local minutes = math.floor(timeInSeconds / 60)
     local seconds = math.mod(math.floor(timeInSeconds), 60)
     return string.format("%d:%02dm", minutes, seconds)
 end
 
--- Function to calculate percentage safely
 local function safePercentage(part, whole)
     if whole and whole > 0 then
         return math.ceil((part / whole) * 100)
@@ -254,7 +245,7 @@ local function updateStatsFrame()
         "Windfury Uptime: " .. windfuryPercentage .. "%"
     )
     
-    SaveData()  -- Save data after each update
+    SaveData()
 end
 
 frameStart:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -268,7 +259,7 @@ frameEnd:SetScript("OnEvent", function(self, event)
 end)
 
 local lastUpdateTime = 0
-local updateInterval = 0.5  -- Update more frequently for smoother real-time updates
+local updateInterval = 0.5
 
 buffFrame:SetScript("OnUpdate", function()
     local currentTime = GetTime()
@@ -278,7 +269,6 @@ buffFrame:SetScript("OnUpdate", function()
             checkForWindfury()
             updateStatsFrame()
         end
-        -- Update the UI regardless of combat state
         lastUpdateTime = currentTime
     end
 end)
@@ -303,18 +293,15 @@ end
 
 SLASH_SS1 = "/ss"
 SlashCmdList["SS"] = function(msg)
-    if msg == "reset" then
-        resetTimers()
-    elseif msg == "show" then
+    if msg == "show" then
         if statsFrame then statsFrame:Show() end
     elseif msg == "hide" then
         if statsFrame then statsFrame:Hide() end
     else
-        DisplayMessage("Unknown command. Use '/ss reset' to reset all timers, '/ss show' to show the UI, or '/ss hide' to hide the UI.")
+        DisplayMessage("Unknown command. '/ss show' to show the UI, or '/ss hide' to hide the UI.")
     end
 end
 
--- Load saved data when the addon is loaded
 local loadFrame = CreateFrame("Frame")
 loadFrame:RegisterEvent("ADDON_LOADED")
 loadFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
