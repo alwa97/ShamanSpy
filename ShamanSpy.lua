@@ -18,12 +18,6 @@ local function DisplayMessage(message)
     DEFAULT_CHAT_FRAME:AddMessage("|cFF00FFFF[ShamanSpy]|r " .. message)
 end
 
-local function SaveData()
-    ShamanSpyData.totalCombatTime = totalCombatTime
-    ShamanSpyData.totalGraceOfAirTime = totalGraceOfAirTime
-    ShamanSpyData.totalWindfuryTime = totalWindfuryTime
-end
-
 local function ResetData()
     ShamanSpyData.totalCombatTime = 0
     ShamanSpyData.totalGraceOfAirTime = 0
@@ -174,7 +168,11 @@ local function CreateStatsFrame()
         normalTexture:Show()
     end)
    
-    closeButton:SetScript("OnClick", function() statsFrame:Hide() end)
+    closeButton:SetScript("OnClick", function() 
+        statsFrame:Hide() 
+        ShamanSpyData.isWindowVisible = 0
+        SaveData()
+    end)
    
     local clickArea = CreateFrame("Frame", nil, closeButton)
     clickArea:SetAllPoints(closeButton)
@@ -215,6 +213,12 @@ local function safePercentage(part, whole)
     else
         return 0
     end
+end
+
+local function SaveData()
+    ShamanSpyData.totalCombatTime = totalCombatTime
+    ShamanSpyData.totalGraceOfAirTime = totalGraceOfAirTime
+    ShamanSpyData.totalWindfuryTime = totalWindfuryTime
 end
 
 local function updateStatsFrame()
@@ -294,11 +298,17 @@ end
 SLASH_SS1 = "/ss"
 SlashCmdList["SS"] = function(msg)
     if msg == "show" then
-        if statsFrame then statsFrame:Show() end
+        if statsFrame then 
+            statsFrame:Show() 
+            ShamanSpyData.isWindowVisible = 1
+        end
     elseif msg == "hide" then
-        if statsFrame then statsFrame:Hide() end
+        if statsFrame then 
+            statsFrame:Hide() 
+            ShamanSpyData.isWindowVisible = 0
+        end
     else
-        DisplayMessage("Unknown command. '/ss show' to show the UI, or '/ss hide' to hide the UI.")
+        DisplayMessage("Unknown command. Use '/ss reset' to reset all timers, '/ss show' to show the UI, or '/ss hide' to hide the UI.")
     end
 end
 
@@ -307,6 +317,12 @@ loadFrame:RegisterEvent("ADDON_LOADED")
 loadFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 loadFrame:SetScript("OnEvent", function(self, event, addonName)
     LoadData()
+    print("ShamanSpyData.isWindowVisible: " .. tostring(ShamanSpyData.isWindowVisible))
+    if ShamanSpyData.isWindowVisible == 0 then
+        statsFrame:Hide()
+    else
+        statsFrame:Show()
+    end
     if UnitAffectingCombat("player") then
         combatStartTime = GetTime()
         DisplayMessage("Entered world in combat, setting combat start time.")
