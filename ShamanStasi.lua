@@ -1,4 +1,4 @@
-ShamanSpyData = ShamanSpyData or {}
+ShamanStasiData = ShamanStasiData or {}
 
 local totalCombatTime = 0
 local totalGraceOfAirTime = 0
@@ -15,19 +15,19 @@ local frameEnd = CreateFrame("Frame")
 local buffFrame = CreateFrame("Frame")
 
 local function DisplayMessage(message)
-    DEFAULT_CHAT_FRAME:AddMessage("|cFF00FFFF[ShamanSpy]|r " .. message)
+    DEFAULT_CHAT_FRAME:AddMessage("|cFF00FFFF[ShamanStasi]|r " .. message)
 end
 
 local function ResetData()
-    ShamanSpyData.totalCombatTime = 0
-    ShamanSpyData.totalGraceOfAirTime = 0
-    ShamanSpyData.totalWindfuryTime = 0
+    ShamanStasiData.totalCombatTime = 0
+    ShamanStasiData.totalGraceOfAirTime = 0
+    ShamanStasiData.totalWindfuryTime = 0
 end
 
 local function LoadData()
-    totalCombatTime = ShamanSpyData.totalCombatTime or 0
-    totalGraceOfAirTime = ShamanSpyData.totalGraceOfAirTime or 0
-    totalWindfuryTime = ShamanSpyData.totalWindfuryTime or 0
+    totalCombatTime = ShamanStasiData.totalCombatTime or 0
+    totalGraceOfAirTime = ShamanStasiData.totalGraceOfAirTime or 0
+    totalWindfuryTime = ShamanStasiData.totalWindfuryTime or 0
 end
 
 local function onCombatStart()
@@ -101,7 +101,7 @@ local statsFrame
 local statsText
 
 local function CreateStatsFrame()
-    local statsFrame = CreateFrame("Frame", "ShamanSpyFrame", UIParent)
+    local statsFrame = CreateFrame("Frame", "ShamanStasiFrame", UIParent)
    
     statsFrame:SetWidth(180)
     statsFrame:SetHeight(110)
@@ -134,7 +134,7 @@ local function CreateStatsFrame()
    
     local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     headerText:SetPoint("CENTER", header, "CENTER")
-    headerText:SetText("ShamanSpy")
+    headerText:SetText("ShamanStasi")
    
     local statsText = statsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     statsText:SetPoint("TOP", header, "BOTTOM", 0, -5)
@@ -170,7 +170,7 @@ local function CreateStatsFrame()
    
     closeButton:SetScript("OnClick", function() 
         statsFrame:Hide() 
-        ShamanSpyData.isWindowVisible = 0
+        ShamanStasiData.isWindowVisible = 0
         SaveData()
     end)
    
@@ -216,9 +216,9 @@ local function safePercentage(part, whole)
 end
 
 local function SaveData()
-    ShamanSpyData.totalCombatTime = totalCombatTime
-    ShamanSpyData.totalGraceOfAirTime = totalGraceOfAirTime
-    ShamanSpyData.totalWindfuryTime = totalWindfuryTime
+    ShamanStasiData.totalCombatTime = totalCombatTime
+    ShamanStasiData.totalGraceOfAirTime = totalGraceOfAirTime
+    ShamanStasiData.totalWindfuryTime = totalWindfuryTime
 end
 
 local function updateStatsFrame()
@@ -300,12 +300,12 @@ SlashCmdList["SS"] = function(msg)
     if msg == "show" then
         if statsFrame then 
             statsFrame:Show() 
-            ShamanSpyData.isWindowVisible = 1
+            ShamanStasiData.isWindowVisible = 1
         end
     elseif msg == "hide" then
         if statsFrame then 
             statsFrame:Hide() 
-            ShamanSpyData.isWindowVisible = 0
+            ShamanStasiData.isWindowVisible = 0
         end
     else
         DisplayMessage("Unknown command. Use '/ss reset' to reset all timers, '/ss show' to show the UI, or '/ss hide' to hide the UI.")
@@ -317,8 +317,8 @@ loadFrame:RegisterEvent("ADDON_LOADED")
 loadFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 loadFrame:SetScript("OnEvent", function(self, event, addonName)
     LoadData()
-    print("ShamanSpyData.isWindowVisible: " .. tostring(ShamanSpyData.isWindowVisible))
-    if ShamanSpyData.isWindowVisible == 0 then
+    print("ShamanStasiData.isWindowVisible: " .. tostring(ShamanStasiData.isWindowVisible))
+    if ShamanStasiData.isWindowVisible == 0 then
         statsFrame:Hide()
     else
         statsFrame:Show()
@@ -328,5 +328,5 @@ loadFrame:SetScript("OnEvent", function(self, event, addonName)
         DisplayMessage("Entered world in combat, setting combat start time.")
     end
     updateStatsFrame()
-    DisplayMessage("ShamanSpy loaded with saved data. Use '/ss show' or '/ss hide' to toggle the display.")
+    DisplayMessage("ShamanStasi loaded with saved data. Use '/ss show' or '/ss hide' to toggle the display.")
 end)

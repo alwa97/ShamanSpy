@@ -1,8 +1,8 @@
-# ShamanSpy
+# ShamanStasi
 
-![example](https://i.imgur.com/hr5K2ad.png "Statistics frame")
+![example](https://i.imgur.com/G0Q5sB7.png "Statistics frame")
 
-ShamanSpy is a World of Warcraft 1.12 addon that provides real-time tracking of Shaman totem uptimes on your character, specifically focusing on Grace of Air and Windfury totems.
+ShamanStasi is a World of Warcraft 1.12 addon that provides real-time tracking of Shaman totem uptimes on your character, specifically focusing on Grace of Air and Windfury totems.
 
 ## Features
 
@@ -14,9 +14,9 @@ ShamanSpy is a World of Warcraft 1.12 addon that provides real-time tracking of 
 
 ## Installation
 
-1. Download the ShamanSpy addon.
+1. Download the ShamanStasi addon.
 2. Extract the contents into your `World of Warcraft/Interface/AddOns` directory.
-3. Ensure the folder is named `ShamanSpy`.
+3. Ensure the folder is named `ShamanStasi`.
 
 ## Usage
 

@@ -1,8 +1,8 @@
 ## Interface: 11200
-## Title: ShamanSpy
+## Title: ShamanStasi
 ## Notes: Real-time totem uptime tracker
 ## Author: Mara
 ## Version: 1.0
-## SavedVariables: ShamanSpyData
+## SavedVariables: ShamanStasiData
 
-ShamanSpy.lua
+ShamanStasi.lua
