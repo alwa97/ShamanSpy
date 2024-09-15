@@ -14,6 +14,86 @@ local frameStart = CreateFrame("Frame")
 local frameEnd = CreateFrame("Frame")
 local buffFrame = CreateFrame("Frame")
 
+local graceOfAirBigIconFrame
+local graceOfAirBigIconTexture
+local graceOfAirActiveTime = 0
+local showModeEnabled = false
+
+local playersName = UnitName("player")
+local st_timer = 0.0
+local st_timerOff = 0.0
+
+local prevWepSpeed = nil
+local prevOHSpeed = nil
+
+local lastSwingUpdate = GetTime()
+
+local function IsSwinging()
+    return (st_timer > 0 or (st_timerOff > 0 and isDualWield()))
+end
+
+local function GetWeaponSpeed(off)
+    local speedMH, speedOH = UnitAttackSpeed("player")
+    if off then
+        return speedOH
+    else
+        return speedMH
+    end
+end
+
+local function isDualWield()
+    return (GetWeaponSpeed(true) ~= nil)
+end
+
+local function ResetTimer(off)
+    prevWepSpeed = GetWeaponSpeed(false)
+    if isDualWield() then
+        prevOHSpeed = GetWeaponSpeed(true)
+    end
+
+    if not off then
+        st_timer = prevWepSpeed
+        if isDualWield() and st_timerOff <= 0 then
+            st_timerOff = 0.2
+        end
+    else
+        st_timerOff = prevOHSpeed
+        if isDualWield() and st_timer <= 0 then
+            st_timer = 0.2
+        end
+    end
+
+    if not st_timer or st_timer <= 0 then
+        st_timer = 0
+    end
+    if not st_timerOff or st_timerOff <= 0 then
+        st_timerOff = 0
+    end
+end
+
+local swingEventFrame = CreateFrame("Frame")
+
+swingEventFrame:SetScript("OnEvent", function()
+    if event == "CHAT_MSG_COMBAT_SELF_HITS" then
+        if (string.find(arg1, "You hit") or string.find(arg1, "You crit") or string.find(arg1, playersName.." hits") or string.find(arg1, playersName.." crits")) then
+            local dmgtype = "hit"
+            if string.find(arg1, "You crit") or string.find(arg1, playersName.." crits") then
+                dmgtype = "crit"
+            elseif string.find(arg1, "glancing") then
+                dmgtype = "glancing"
+            end
+            ResetTimer(false) 
+        end
+    elseif event == "CHAT_MSG_COMBAT_SELF_MISSES" then
+        if (string.find(arg1, "Your") or string.find(arg1, "miss")) then
+            ResetTimer(false) 
+        end
+    end
+end)
+
+swingEventFrame:RegisterEvent("CHAT_MSG_COMBAT_SELF_HITS")
+swingEventFrame:RegisterEvent("CHAT_MSG_COMBAT_SELF_MISSES")
+
 local function DisplayMessage(message)
     DEFAULT_CHAT_FRAME:AddMessage("|cFF00FFFF[ShamanStasi]|r " .. message)
 end
@@ -22,35 +102,90 @@ local function ResetData()
     ShamanStasiData.totalCombatTime = 0
     ShamanStasiData.totalGraceOfAirTime = 0
     ShamanStasiData.totalWindfuryTime = 0
+    ShamanStasiData.showModeEnabled = showModeEnabled
 end
 
 local function LoadData()
     totalCombatTime = ShamanStasiData.totalCombatTime or 0
     totalGraceOfAirTime = ShamanStasiData.totalGraceOfAirTime or 0
     totalWindfuryTime = ShamanStasiData.totalWindfuryTime or 0
+    showModeEnabled = ShamanStasiData.showModeEnabled or false
 end
 
 local function onCombatStart()
-    combatStartTime = GetTime()
+    if IsSwinging() then
+        combatStartTime = GetTime()
+        DisplayMessage("Combat and swinging started.")
+    else
+        DisplayMessage("Combat started, but no swing detected.")
+    end
 end
 
 local function onCombatEnd()
-    totalCombatTime = totalCombatTime + (GetTime() - combatStartTime)
-    
+    if combatStartTime > 0 then
+        totalCombatTime = totalCombatTime + (GetTime() - combatStartTime)
+    end
+
     if graceOfAirIsActive then
         totalGraceOfAirTime = totalGraceOfAirTime + (GetTime() - graceOfAirStartTime)
         graceOfAirIsActive = false
     end
+
     if windfuryIsActive then
         totalWindfuryTime = totalWindfuryTime + (GetTime() - windfuryStartTime)
         windfuryIsActive = false
     end
+
+    st_timer = 0
+    st_timerOff = 0
+    combatStartTime = 0
     SaveData()
 end
 
 local graceOfAirIcon = "Interface\\Icons\\Spell_Nature_InvisibilityTotem"
 
+local function createGraceOfAirBigIcon()
+    graceOfAirBigIconFrame = CreateFrame("Frame", nil, UIParent)
+    graceOfAirBigIconFrame:SetHeight(128)
+    graceOfAirBigIconFrame:SetWidth(128)
+    graceOfAirBigIconFrame:SetPoint("CENTER", UIParent, "CENTER")
+    graceOfAirBigIconFrame:Hide()
+
+    graceOfAirBigIconTexture = graceOfAirBigIconFrame:CreateTexture(nil, "ARTWORK")
+    graceOfAirBigIconTexture:SetAllPoints()
+    graceOfAirBigIconTexture:SetTexture("Interface\\Icons\\Spell_Nature_Windfury")
+end
+
+local function checkForGraceOfAirAlways()
+    local graceOfAirAlwaysFound = false
+    local i = 1
+    local buffIcon = UnitBuff("player", i)
+
+    while buffIcon do
+        if buffIcon == graceOfAirIcon then
+            graceOfAirAlwaysFound = true
+            break
+        end
+        i = i + 1
+        buffIcon = UnitBuff("player", i)
+    end
+
+    if graceOfAirAlwaysFound then
+        graceOfAirActiveTime = graceOfAirActiveTime + 0.5
+        if showModeEnabled and graceOfAirActiveTime >= 8 then
+            graceOfAirBigIconFrame:Show()
+        end
+    else
+        graceOfAirActiveTime = 0
+        graceOfAirBigIconFrame:Hide()
+    end
+end
+
 local function checkForGraceOfAir()
+    if st_timer <= 0 and st_timerOff <= 0 then
+        graceOfAirIsActive = false
+    end
+
     local graceOfAirFound = false
     local i = 1
     local buffIcon = UnitBuff("player", i)
@@ -58,7 +193,7 @@ local function checkForGraceOfAir()
     while buffIcon do
         if buffIcon == graceOfAirIcon then
             graceOfAirFound = true
-            if not graceOfAirIsActive and UnitAffectingCombat("player") then
+            if not graceOfAirIsActive and UnitAffectingCombat("player") and IsSwinging() then
                 graceOfAirStartTime = GetTime()
                 graceOfAirIsActive = true
             end
@@ -69,33 +204,31 @@ local function checkForGraceOfAir()
     end
 
     if not graceOfAirFound and graceOfAirIsActive then
-        if UnitAffectingCombat("player") then
-            totalGraceOfAirTime = totalGraceOfAirTime + (GetTime() - graceOfAirStartTime)
-        end
         graceOfAirIsActive = false
         graceOfAirStartTime = 0
-        SaveData()
     end
 end
 
+
 local function checkForWindfury()
+    if st_timer <= 0 and st_timerOff <= 0 then
+        windfuryIsActive = false
+    end
+
     local hasMainHandEnchant, _, _, enchantId = GetWeaponEnchantInfo()
     if hasMainHandEnchant then
-        if not windfuryIsActive and UnitAffectingCombat("player") then
+        if not windfuryIsActive and UnitAffectingCombat("player") and IsSwinging() then
             windfuryStartTime = GetTime()
             windfuryIsActive = true
         end
     else
         if windfuryIsActive then
-            if UnitAffectingCombat("player") then
-                totalWindfuryTime = totalWindfuryTime + (GetTime() - windfuryStartTime)
-            end
             windfuryIsActive = false
             windfuryStartTime = 0
-            SaveData()
         end
     end
 end
+
 
 local statsFrame
 local statsText
@@ -219,38 +352,46 @@ local function SaveData()
     ShamanStasiData.totalCombatTime = totalCombatTime
     ShamanStasiData.totalGraceOfAirTime = totalGraceOfAirTime
     ShamanStasiData.totalWindfuryTime = totalWindfuryTime
+    ShamanStasiData.showModeEnabled = showModeEnabled
 end
 
 local function updateStatsFrame()
     local currentTime = GetTime()
-    
-    if UnitAffectingCombat("player") then
+
+    if UnitAffectingCombat("player") and IsSwinging() then
         totalCombatTime = totalCombatTime + (currentTime - combatStartTime)
         combatStartTime = currentTime
-        
+
         if graceOfAirIsActive then
             totalGraceOfAirTime = totalGraceOfAirTime + (currentTime - graceOfAirStartTime)
             graceOfAirStartTime = currentTime
         end
-        
+
         if windfuryIsActive then
             totalWindfuryTime = totalWindfuryTime + (currentTime - windfuryStartTime)
             windfuryStartTime = currentTime
         end
+    else
+        combatStartTime = currentTime
+        graceOfAirStartTime = currentTime
+        windfuryStartTime = currentTime
+        graceOfAirIsActive = false
+        windfuryIsActive = false
     end
-    
+
     local formattedCombatTime = formatTime(totalCombatTime)
     local graceOfAirPercentage = safePercentage(totalGraceOfAirTime, totalCombatTime)
     local windfuryPercentage = safePercentage(totalWindfuryTime, totalCombatTime)
-    
+
     statsText:SetText(
-        "Combat Time: " .. formattedCombatTime .. "\n" ..
+        "Total Swing Time: " .. formattedCombatTime .. "\n" ..
         "Grace of Air Uptime: " .. graceOfAirPercentage .. "%\n" ..
         "Windfury Uptime: " .. windfuryPercentage .. "%"
     )
-    
+
     SaveData()
 end
+
 
 frameStart:RegisterEvent("PLAYER_REGEN_DISABLED")
 frameStart:SetScript("OnEvent", function(self, event)
@@ -267,15 +408,30 @@ local updateInterval = 0.5
 
 buffFrame:SetScript("OnUpdate", function()
     local currentTime = GetTime()
+    local elapsed = currentTime - lastSwingUpdate
+    lastSwingUpdate = currentTime
+
+    if st_timer > 0 then
+        st_timer = st_timer - elapsed
+        if st_timer < 0 then st_timer = 0 end
+    end
+    if st_timerOff > 0 then
+        st_timerOff = st_timerOff - elapsed
+        if st_timerOff < 0 then st_timerOff = 0 end
+    end
+
     if (currentTime - lastUpdateTime) >= updateInterval then
-        if UnitAffectingCombat("player") then
+        if UnitAffectingCombat("player") and IsSwinging() then
             checkForGraceOfAir()
             checkForWindfury()
-            updateStatsFrame()
         end
+
+        updateStatsFrame()
+        checkForGraceOfAirAlways()
         lastUpdateTime = currentTime
     end
 end)
+
 
 function resetTimers()
     ResetData()
@@ -302,21 +458,34 @@ SlashCmdList["SS"] = function(msg)
             statsFrame:Show() 
             ShamanStasiData.isWindowVisible = 1
         end
+    elseif msg == "hideagi" then
+        graceOfAirBigIconFrame:Hide()
     elseif msg == "hide" then
         if statsFrame then 
             statsFrame:Hide() 
             ShamanStasiData.isWindowVisible = 0
         end
+    elseif msg == "smode" then
+        showModeEnabled = not showModeEnabled
+        ShamanStasiData.showModeEnabled = showModeEnabled
+        if showModeEnabled then
+            DisplayMessage("Show mode enabled. Grace of Air big icon will be displayed when active for 8+ seconds.")
+        else
+            DisplayMessage("Show mode disabled. Grace of Air big icon will not be displayed.")
+            graceOfAirBigIconFrame:Hide()
+        end
+        SaveData()
     else
-        DisplayMessage("Unknown command. Use '/ss reset' to reset all timers, '/ss show' to show the UI, or '/ss hide' to hide the UI.")
+        DisplayMessage("Unknown command. Use '/ss reset' to reset all timers, '/ss show' to show the UI, '/ss hide' to hide the UI, or '/ss smode' to toggle show mode.")
     end
 end
 
 local loadFrame = CreateFrame("Frame")
-loadFrame:RegisterEvent("ADDON_LOADED")
-loadFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-loadFrame:SetScript("OnEvent", function(self, event, addonName)
+local addonLoadedFrame = CreateFrame("Frame")
+addonLoadedFrame:RegisterEvent("ADDON_LOADED")
+addonLoadedFrame:SetScript("OnEvent", function()
     LoadData()
+    createGraceOfAirBigIcon()
     print("ShamanStasiData.isWindowVisible: " .. tostring(ShamanStasiData.isWindowVisible))
     if ShamanStasiData.isWindowVisible == 0 then
         statsFrame:Hide()
@@ -328,5 +497,14 @@ loadFrame:SetScript("OnEvent", function(self, event, addonName)
         DisplayMessage("Entered world in combat, setting combat start time.")
     end
     updateStatsFrame()
-    DisplayMessage("ShamanStasi loaded with saved data. Use '/ss show' or '/ss hide' to toggle the display.")
+    DisplayMessage("ShamanStasi loaded with saved data. Use '/ss show' or '/ss hide' to toggle the display, and '/ss smode' to toggle show mode for when agi totem has been alove too long.")
+end)
+
+local enteringWorldFrame = CreateFrame("Frame")
+enteringWorldFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+enteringWorldFrame:SetScript("OnEvent", function()
+    graceOfAirActiveTime = 0
+    if graceOfAirBigIconFrame then
+        graceOfAirBigIconFrame:Hide()
+    end
 end)

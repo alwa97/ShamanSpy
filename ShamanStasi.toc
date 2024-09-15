@@ -2,7 +2,7 @@
 ## Title: ShamanStasi
 ## Notes: Real-time totem uptime tracker
 ## Author: Mara
-## Version: 1.0
+## Version: 1.1
 ## SavedVariables: ShamanStasiData
 
 ShamanStasi.lua
