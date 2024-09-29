@@ -176,9 +176,9 @@ local function onCombatEnd()
     graceOfAirIsActive = false
     windfuryIsActive = false
 
-    DisplayMessage("totalCombatTime" .. totalCombatTime)
-    DisplayMessage("totalGraceOfAirTime" .. totalGraceOfAirTime)
-    DisplayMessage("totalWindfuryTime" .. totalWindfuryTime)
+    --DisplayMessage("totalCombatTime" .. totalCombatTime)
+    --DisplayMessage("totalGraceOfAirTime" .. totalGraceOfAirTime)
+    --DisplayMessage("totalWindfuryTime" .. totalWindfuryTime)
 
     st_timer = 0
     st_timerOff = 0
