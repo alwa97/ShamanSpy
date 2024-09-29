@@ -32,7 +32,7 @@ local lastUpdateTime = 0
 local updateInterval = 0.1
 
 local lastWhisperTime = 0
-local whisperInterval = 300
+local whisperInterval = 600
 
 local function IsPlayerInGroup(playerName)
     if GetNumRaidMembers() > 0 then
