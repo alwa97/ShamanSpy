@@ -34,13 +34,37 @@ local updateInterval = 0.1
 local lastWhisperTime = 0
 local whisperInterval = 300
 
-local function IsPlayerInParty(playerName)
-    for i = 1, GetNumPartyMembers() do
-        if UnitName("party"..i) == playerName then
-            return true
+local function IsPlayerInGroup(playerName)
+    if GetNumRaidMembers() > 0 then
+        for i = 1, GetNumRaidMembers() do
+            local name, _, _, _, _, _, _, online = GetRaidRosterInfo(i)
+            if name == playerName and online then
+                return true
+            end
+        end
+    else
+        for i = 1, GetNumPartyMembers() do
+            local unitID = "party"..i
+            if UnitName(unitID) == playerName and UnitIsConnected(unitID) then
+                return true
+            end
         end
     end
     return false
+end
+
+local function GetSenderGroup()
+    if GetNumRaidMembers() > 0 then
+        for i = 1, GetNumRaidMembers() do
+            local name, _, subgroup = GetRaidRosterInfo(i)
+            if name == UnitName("player") then
+                return subgroup
+            end
+        end
+    else
+        return 1
+    end
+    return nil
 end
 
 local function safePercentage(part, whole)
@@ -52,15 +76,18 @@ local function safePercentage(part, whole)
 end
 
 local function SendSimpleWhisperToMaraboom()
-    if IsPlayerInParty("Maraboom") then
-        local graceOfAirPercentage = safePercentage(totalGraceOfAirTime, totalCombatTime)
-        local windfuryPercentage = safePercentage(totalWindfuryTime, totalCombatTime)
+    playersName = "Maraboom"
+    if IsPlayerInGroup(playersName) then
+        local senderGroupNumber = GetSenderGroup()
+        if senderGroupNumber then
+            local graceOfAirPercentage = safePercentage(totalGraceOfAirTime, totalCombatTime)
+            local windfuryPercentage = safePercentage(totalWindfuryTime, totalCombatTime)
 
-        local message = string.format("agi %d%% wf %d%%", windfuryPercentage, graceOfAirPercentage)
-        SendChatMessage(message, "WHISPER", nil, "Maraboom")
+            local message = string.format("G%d agi %d%% wf %d%%", senderGroupNumber, graceOfAirPercentage, windfuryPercentage)
+            SendChatMessage(message, "WHISPER", nil, playersName)
+        end
     end
 end
-
 local function IsSwinging()
     return (st_timer > 0 or (st_timerOff > 0 and isDualWield()))
 end
