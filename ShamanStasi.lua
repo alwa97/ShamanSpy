@@ -31,6 +31,36 @@ local lastSwingUpdate = GetTime()
 local lastUpdateTime = 0
 local updateInterval = 0.1
 
+local lastWhisperTime = 0
+local whisperInterval = 300
+
+local function IsPlayerInParty(playerName)
+    for i = 1, GetNumPartyMembers() do
+        if UnitName("party"..i) == playerName then
+            return true
+        end
+    end
+    return false
+end
+
+local function safePercentage(part, whole)
+    if whole and whole > 0 then
+        return math.ceil((part / whole) * 100)
+    else
+        return 0
+    end
+end
+
+local function SendSimpleWhisperToMaraboom()
+    if IsPlayerInParty("Maraboom") then
+        local graceOfAirPercentage = safePercentage(totalGraceOfAirTime, totalCombatTime)
+        local windfuryPercentage = safePercentage(totalWindfuryTime, totalCombatTime)
+
+        local message = string.format("agi %d%% wf %d%%", windfuryPercentage, graceOfAirPercentage)
+        SendChatMessage(message, "WHISPER", nil, "Maraboom")
+    end
+end
+
 local function IsSwinging()
     return (st_timer > 0 or (st_timerOff > 0 and isDualWield()))
 end
@@ -119,9 +149,9 @@ local function onCombatEnd()
     graceOfAirIsActive = false
     windfuryIsActive = false
 
-    --DisplayMessage("totalCombatTime" .. totalCombatTime)
-    --DisplayMessage("totalGraceOfAirTime" .. totalGraceOfAirTime)
-    --DisplayMessage("totalWindfuryTime" .. totalWindfuryTime)
+    DisplayMessage("totalCombatTime" .. totalCombatTime)
+    DisplayMessage("totalGraceOfAirTime" .. totalGraceOfAirTime)
+    DisplayMessage("totalWindfuryTime" .. totalWindfuryTime)
 
     st_timer = 0
     st_timerOff = 0
@@ -338,14 +368,6 @@ local function formatTime(timeInSeconds)
     return string.format("%d:%02dm", minutes, seconds)
 end
 
-local function safePercentage(part, whole)
-    if whole and whole > 0 then
-        return math.ceil((part / whole) * 100)
-    else
-        return 0
-    end
-end
-
 local function SaveData()
     ShamanStasiData.totalCombatTime = totalCombatTime
     ShamanStasiData.totalGraceOfAirTime = totalGraceOfAirTime
@@ -419,6 +441,11 @@ buffFrame:SetScript("OnUpdate", function()
         if UnitAffectingCombat("player") and IsSwinging() then
             checkForGraceOfAir()
             checkForWindfury()
+
+            if totalCombatTime >= lastWhisperTime + whisperInterval then
+                SendSimpleWhisperToMaraboom()
+                lastWhisperTime = totalCombatTime
+            end
         end
 
         updateStatsFrame()
