@@ -278,9 +278,6 @@ local function onCombatStart()
         checkForGraceOfAir()
         checkForWindfury()
         combatStartTime = GetTime()
-        DisplayMessage("Combat and swinging started.")
-    else
-        DisplayMessage("Combat started, but no swing detected.")
     end
 end
 
