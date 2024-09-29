@@ -28,6 +28,9 @@ local prevOHSpeed = nil
 
 local lastSwingUpdate = GetTime()
 
+local lastUpdateTime = 0
+local updateInterval = 0.1
+
 local function IsSwinging()
     return (st_timer > 0 or (st_timerOff > 0 and isDualWield()))
 end
@@ -112,29 +115,13 @@ local function LoadData()
     showModeEnabled = ShamanStasiData.showModeEnabled or false
 end
 
-local function onCombatStart()
-    if IsSwinging() then
-        combatStartTime = GetTime()
-        DisplayMessage("Combat and swinging started.")
-    else
-        DisplayMessage("Combat started, but no swing detected.")
-    end
-end
-
 local function onCombatEnd()
-    if combatStartTime > 0 then
-        totalCombatTime = totalCombatTime + (GetTime() - combatStartTime)
-    end
+    graceOfAirIsActive = false
+    windfuryIsActive = false
 
-    if graceOfAirIsActive then
-        totalGraceOfAirTime = totalGraceOfAirTime + (GetTime() - graceOfAirStartTime)
-        graceOfAirIsActive = false
-    end
-
-    if windfuryIsActive then
-        totalWindfuryTime = totalWindfuryTime + (GetTime() - windfuryStartTime)
-        windfuryIsActive = false
-    end
+    --DisplayMessage("totalCombatTime" .. totalCombatTime)
+    --DisplayMessage("totalGraceOfAirTime" .. totalGraceOfAirTime)
+    --DisplayMessage("totalWindfuryTime" .. totalWindfuryTime)
 
     st_timer = 0
     st_timerOff = 0
@@ -171,7 +158,7 @@ local function checkForGraceOfAirAlways()
     end
 
     if graceOfAirAlwaysFound then
-        graceOfAirActiveTime = graceOfAirActiveTime + 0.5
+        graceOfAirActiveTime = graceOfAirActiveTime + 0.1
         if showModeEnabled and graceOfAirActiveTime >= 8 then
             graceOfAirBigIconFrame:Show()
         end
@@ -193,7 +180,7 @@ local function checkForGraceOfAir()
     while buffIcon do
         if buffIcon == graceOfAirIcon then
             graceOfAirFound = true
-            if not graceOfAirIsActive and UnitAffectingCombat("player") and IsSwinging() then
+            if not graceOfAirIsActive and IsSwinging() then
                 graceOfAirStartTime = GetTime()
                 graceOfAirIsActive = true
             end
@@ -217,7 +204,7 @@ local function checkForWindfury()
 
     local hasMainHandEnchant, _, _, enchantId = GetWeaponEnchantInfo()
     if hasMainHandEnchant then
-        if not windfuryIsActive and UnitAffectingCombat("player") and IsSwinging() then
+        if not windfuryIsActive and IsSwinging() then
             windfuryStartTime = GetTime()
             windfuryIsActive = true
         end
@@ -226,6 +213,17 @@ local function checkForWindfury()
             windfuryIsActive = false
             windfuryStartTime = 0
         end
+    end
+end
+
+local function onCombatStart()
+    if IsSwinging() then
+        checkForGraceOfAir()
+        checkForWindfury()
+        combatStartTime = GetTime()
+        DisplayMessage("Combat and swinging started.")
+    else
+        DisplayMessage("Combat started, but no swing detected.")
     end
 end
 
@@ -402,9 +400,6 @@ frameEnd:RegisterEvent("PLAYER_REGEN_ENABLED")
 frameEnd:SetScript("OnEvent", function(self, event)
     onCombatEnd()
 end)
-
-local lastUpdateTime = 0
-local updateInterval = 0.5
 
 buffFrame:SetScript("OnUpdate", function()
     local currentTime = GetTime()
