@@ -532,7 +532,6 @@ addonLoadedFrame:RegisterEvent("ADDON_LOADED")
 addonLoadedFrame:SetScript("OnEvent", function()
     LoadData()
     createGraceOfAirBigIcon()
-    print("ShamanStasiData.isWindowVisible: " .. tostring(ShamanStasiData.isWindowVisible))
     if ShamanStasiData.isWindowVisible == 0 then
         statsFrame:Hide()
     else
