@@ -183,7 +183,7 @@ local function onCombatEnd()
     st_timer = 0
     st_timerOff = 0
     combatStartTime = 0
-    SaveData()
+    SaveStasiData()
 end
 
 local graceOfAirIcon = "Interface\\Icons\\Spell_Nature_InvisibilityTotem"
@@ -316,34 +316,34 @@ local function CreateStatsFrame()
     headerTexture:SetAllPoints()
     headerTexture:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
     headerTexture:SetTexCoord(0.31, 0.67, 0, 0.63)
-   
+
     local headerText = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     headerText:SetPoint("CENTER", header, "CENTER")
     headerText:SetText("ShamanStasi")
-   
+
     local statsText = statsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
     statsText:SetPoint("TOP", header, "BOTTOM", 0, -5)
     statsText:SetText("Combat Stats")
-   
+
     local closeButton = CreateFrame("Button", nil, header)
     closeButton:SetWidth(32)
     closeButton:SetHeight(32)
     closeButton:SetPoint("RIGHT", header, "RIGHT", 0, 0)
-   
+
     local normalTexture = closeButton:CreateTexture(nil, "ARTWORK")
     normalTexture:SetAllPoints()
     normalTexture:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Up")
-   
+
     local hoverTexture = closeButton:CreateTexture(nil, "ARTWORK")
     hoverTexture:SetAllPoints()
     hoverTexture:SetTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Up")
     hoverTexture:SetVertexColor(1, 0, 0)
     hoverTexture:Hide()
-   
+
     closeButton:SetNormalTexture(normalTexture)
     closeButton:SetPushedTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Down")
     closeButton:SetHighlightTexture("Interface\\Buttons\\UI-Panel-MinimizeButton-Highlight", "ADD")
-   
+
     closeButton:SetScript("OnEnter", function()
         normalTexture:Hide()
         hoverTexture:Show()
@@ -352,25 +352,27 @@ local function CreateStatsFrame()
         hoverTexture:Hide()
         normalTexture:Show()
     end)
-   
-    closeButton:SetScript("OnClick", function() 
-        statsFrame:Hide() 
+
+    closeButton:SetScript("OnClick", function()
+        statsFrame:Hide()
         ShamanStasiData.isWindowVisible = 0
-        SaveData()
+        SaveStasiData()
     end)
-   
+
     local clickArea = CreateFrame("Frame", nil, closeButton)
     clickArea:SetAllPoints(closeButton)
     clickArea:EnableMouse(true)
-    clickArea:SetScript("OnMouseDown", function() closeButton:GetScript("OnClick")() end)
-   
+    clickArea:SetScript("OnMouseDown", function()
+        closeButton:GetScript("OnClick")()
+    end)
+
     clickArea:SetScript("OnEnter", function()
         closeButton:GetScript("OnEnter")()
     end)
     clickArea:SetScript("OnLeave", function()
         closeButton:GetScript("OnLeave")()
     end)
-   
+
     local resetButton = CreateFrame("Button", nil, statsFrame, "UIPanelButtonTemplate")
     resetButton:SetWidth(100)
     resetButton:SetHeight(22)
@@ -379,7 +381,7 @@ local function CreateStatsFrame()
     resetButton:SetScript("OnClick", function()
         resetTimers()
     end)
-   
+
     statsFrame:Show()
     return statsFrame, statsText
 end
@@ -392,7 +394,7 @@ local function formatTime(timeInSeconds)
     return string.format("%d:%02dm", minutes, seconds)
 end
 
-local function SaveData()
+local function SaveStasiData()
     ShamanStasiData.totalCombatTime = totalCombatTime
     ShamanStasiData.totalGraceOfAirTime = totalGraceOfAirTime
     ShamanStasiData.totalWindfuryTime = totalWindfuryTime
@@ -428,14 +430,13 @@ local function updateStatsFrame()
     local windfuryPercentage = safePercentage(totalWindfuryTime, totalCombatTime)
 
     statsText:SetText(
-        "Total Swing Time: " .. formattedCombatTime .. "\n" ..
-        "Grace of Air Uptime: " .. graceOfAirPercentage .. "%\n" ..
-        "Windfury Uptime: " .. windfuryPercentage .. "%"
+            "Total Swing Time: " .. formattedCombatTime .. "\n" ..
+                    "Grace of Air Uptime: " .. graceOfAirPercentage .. "%\n" ..
+                    "Windfury Uptime: " .. windfuryPercentage .. "%"
     )
 
-    SaveData()
+    SaveStasiData()
 end
-
 
 frameStart:RegisterEvent("PLAYER_REGEN_DISABLED")
 frameStart:SetScript("OnEvent", function(self, event)
@@ -454,11 +455,15 @@ buffFrame:SetScript("OnUpdate", function()
 
     if st_timer > 0 then
         st_timer = st_timer - elapsed
-        if st_timer < 0 then st_timer = 0 end
+        if st_timer < 0 then
+            st_timer = 0
+        end
     end
     if st_timerOff > 0 then
         st_timerOff = st_timerOff - elapsed
-        if st_timerOff < 0 then st_timerOff = 0 end
+        if st_timerOff < 0 then
+            st_timerOff = 0
+        end
     end
 
     if (currentTime - lastUpdateTime) >= updateInterval then
@@ -477,7 +482,6 @@ buffFrame:SetScript("OnUpdate", function()
         lastUpdateTime = currentTime
     end
 end)
-
 
 function resetTimers()
     ResetData()
@@ -500,15 +504,15 @@ end
 SLASH_SS1 = "/ss"
 SlashCmdList["SS"] = function(msg)
     if msg == "show" then
-        if statsFrame then 
-            statsFrame:Show() 
+        if statsFrame then
+            statsFrame:Show()
             ShamanStasiData.isWindowVisible = 1
         end
     elseif msg == "hideagi" then
         graceOfAirBigIconFrame:Hide()
     elseif msg == "hide" then
-        if statsFrame then 
-            statsFrame:Hide() 
+        if statsFrame then
+            statsFrame:Hide()
             ShamanStasiData.isWindowVisible = 0
         end
     elseif msg == "smode" then
@@ -520,7 +524,7 @@ SlashCmdList["SS"] = function(msg)
             DisplayMessage("Show mode disabled. Grace of Air big icon will not be displayed.")
             graceOfAirBigIconFrame:Hide()
         end
-        SaveData()
+        SaveStasiData()
     else
         DisplayMessage("Unknown command. Use '/ss reset' to reset all timers, '/ss show' to show the UI, '/ss hide' to hide the UI, or '/ss smode' to toggle show mode.")
     end
