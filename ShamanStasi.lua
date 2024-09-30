@@ -172,6 +172,13 @@ local function LoadData()
     showModeEnabled = ShamanStasiData.showModeEnabled or false
 end
 
+local function SaveStasiData()
+    ShamanStasiData.totalCombatTime = totalCombatTime
+    ShamanStasiData.totalGraceOfAirTime = totalGraceOfAirTime
+    ShamanStasiData.totalWindfuryTime = totalWindfuryTime
+    ShamanStasiData.showModeEnabled = showModeEnabled
+end
+
 local function onCombatEnd()
     graceOfAirIsActive = false
     windfuryIsActive = false
@@ -392,13 +399,6 @@ local function formatTime(timeInSeconds)
     local minutes = math.floor(timeInSeconds / 60)
     local seconds = math.mod(math.floor(timeInSeconds), 60)
     return string.format("%d:%02dm", minutes, seconds)
-end
-
-local function SaveStasiData()
-    ShamanStasiData.totalCombatTime = totalCombatTime
-    ShamanStasiData.totalGraceOfAirTime = totalGraceOfAirTime
-    ShamanStasiData.totalWindfuryTime = totalWindfuryTime
-    ShamanStasiData.showModeEnabled = showModeEnabled
 end
 
 local function updateStatsFrame()
